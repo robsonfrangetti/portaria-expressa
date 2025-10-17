@@ -1,0 +1,33 @@
+services:
+  # Backend API
+  - type: web
+    name: portaria-expressa-backend
+    env: node
+    plan: starter
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_lvI8tZTbP7xJ@ep-spring-smoke-ac68dzir-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+      - key: JWT_SECRET
+        value: portaria-expressa-jwt-secret-2024-super-secure-key
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: FRONTEND_URL
+        value: https://www.portariaexpressa.com.br
+    customDomains:
+      - api.portariaexpressa.com.br
+
+  # Frontend
+  - type: static
+    name: portaria-expressa-frontend
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://api.portariaexpressa.com.br
+    customDomains:
+      - www.portariaexpressa.com.br
+      - portariaexpressa.com.br
