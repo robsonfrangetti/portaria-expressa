@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Empresas (Multi-tenant)
+model Company {
+  id        String   @id @default(cuid())
+  cnpj      String   @unique
+  name      String
+  email     String   @unique
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  users     User[]
+  visitors  Visitor[]
+  reports   Report[]
+  entries   Entry[]
+
+  @@map("companies")
+}
+
+// Usuários do sistema (administradores das empresas)
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("ADMIN") // "SUPER_ADMIN", "ADMIN", "OPERATOR"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  entries   Entry[]
+
+  @@map("users")
+}
+
+// Visitantes cadastrados
+model Visitor {
+  id          String   @id @default(cuid())
+  name        String
+  document    String?  // CPF ou RG
+  phone       String?
+  email       String?
+  companyName String?  // Empresa do visitante
+  photo       String?  // URL da foto
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relacionamentos
+  companyId   String
+  company     Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  entries     Entry[]
+
+  @@map("visitors")
+}
+
+// Registros de entrada/saída
+model Entry {
+  id          String      @id @default(cuid())
+  type        String      // "ENTRY" ou "EXIT"
+  timestamp   DateTime    @default(now())
+  notes       String?
+  photo       String?     // Foto do momento da entrada/saída
+  temperature Float?      // Temperatura corporal (se necessário)
+  
+  // Relacionamentos
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  visitorId   String?
+  visitor     Visitor?    @relation(fields: [visitorId], references: [id])
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("entries")
+}
+
+// Relatórios gerados
+model Report {
+  id          String      @id @default(cuid())
+  type        String      // "DAILY", "WEEKLY", "MONTHLY"
+  period      String      // "2024-01" para mensal, "2024-01-15" para quinzenal, etc.
+  data        String      // Dados do relatório em JSON (como string)
+  fileName    String?     // Nome do arquivo gerado
+  fileUrl     String?     // URL do arquivo
+  createdAt   DateTime    @default(now())
+
+  // Relacionamentos
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+// Enums removidos - usando strings no SQLite
+// UserRole: "SUPER_ADMIN", "ADMIN", "OPERATOR"
+// EntryType: "ENTRY", "EXIT"  
+// ReportType: "DAILY", "WEEKLY", "MONTHLY"
