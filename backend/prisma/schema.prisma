@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Empresas (Multi-tenant)
@@ -95,7 +95,7 @@ model Report {
   id          String      @id @default(cuid())
   type        String      // "DAILY", "WEEKLY", "MONTHLY"
   period      String      // "2024-01" para mensal, "2024-01-15" para quinzenal, etc.
-  data        String      // Dados do relatório em JSON (como string)
+  data        Json        // Dados do relatório em JSON
   fileName    String?     // Nome do arquivo gerado
   fileUrl     String?     // URL do arquivo
   createdAt   DateTime    @default(now())
